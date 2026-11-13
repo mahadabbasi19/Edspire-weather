@@ -11,7 +11,8 @@ export function CitySearch({ onSelect }: { onSelect: (city: City) => void }) {
     [open, setOpen] = useState(false),
     [active, setActive] = useState(-1);
   const root = useRef<HTMLFormElement>(null),
-    input = useRef<HTMLInputElement>(null);
+    input = useRef<HTMLInputElement>(null),
+    resolved = useRef(false);
   useEffect(() => {
     const controller = new AbortController();
     setResults([]);
@@ -52,6 +53,7 @@ export function CitySearch({ onSelect }: { onSelect: (city: City) => void }) {
     return () => document.removeEventListener("pointerdown", close);
   }, []);
   function select(city: City) {
+    resolved.current = true;
     onSelect(city);
     setQuery("");
     setError("");
@@ -61,7 +63,7 @@ export function CitySearch({ onSelect }: { onSelect: (city: City) => void }) {
   return (
     <form
       ref={root}
-      className="search"
+      className={`search ${error ? "has-error" : ""}`}
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
@@ -92,9 +94,10 @@ export function CitySearch({ onSelect }: { onSelect: (city: City) => void }) {
         aria-describedby={error ? "search-error" : undefined}
         onFocus={() => setOpen(true)}
         onBlur={() => {
-          setError(cityError(query, false));
+          if (!resolved.current) setError(cityError(query, false));
         }}
         onChange={(e) => {
+          resolved.current = false;
           setQuery(e.target.value);
           setError("");
           setOpen(true);
@@ -157,12 +160,12 @@ export function CitySearch({ onSelect }: { onSelect: (city: City) => void }) {
             )}{" "}
             {query.trim().length < 2 ? "Type at least two letters." : status}
           </div>
-          {error && (
-            <p id="search-error" className="error">
-              {error}
-            </p>
-          )}
         </div>
+      )}
+      {error && (
+        <p id="search-error" className="error search-validation" role="alert">
+          {error}
+        </p>
       )}
     </form>
   );

@@ -310,3 +310,45 @@ test("connection failure is visible even when the browser reports online", async
   ).toBeVisible();
   await expect(page.locator(".forecast-day")).toHaveCount(5);
 });
+
+test("blur validation stays visible after outside dismissal and clears on correction", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const search = page.getByRole("combobox");
+  await search.fill("Unresolved city");
+  await page.getByRole("heading", { name: "Your day. At a glance." }).click();
+  await expect(
+    page.getByText("Choose a city from the suggestions."),
+  ).toBeVisible();
+  await expect(search).toHaveAttribute("aria-expanded", "false");
+  await expect(search).toHaveAttribute("aria-describedby", "search-error");
+  await search.fill("Paris");
+  await expect(
+    page.getByText("Choose a city from the suggestions."),
+  ).toHaveCount(0);
+  await expect(page.getByRole("option")).toBeVisible();
+  await page.getByRole("option").click();
+  await page.getByRole("heading", { name: "Your day. At a glance." }).click();
+  await expect(search).toHaveAttribute("aria-invalid", "false");
+  await expect(page.getByText("Enter a city name.")).toHaveCount(0);
+});
+
+test("removing another favourite restores focus to a usable city shortcut", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator(".forecast-day")).toHaveCount(5);
+  await page.getByRole("button", { name: "Save city", exact: true }).click();
+  await page.getByRole("combobox").fill("Paris");
+  await page.getByRole("option").click();
+  await expect(page.locator(".forecast-day")).toHaveCount(5);
+  await page.getByRole("button", { name: "Save city", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Remove Karachi", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Remove city", exact: true }).click();
+  await expect(
+    page.locator(".favourite-city").filter({ hasText: "Paris" }),
+  ).toBeFocused();
+});

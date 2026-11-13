@@ -2,9 +2,9 @@
 
 A client-only React weather dashboard: real current conditions, five local-calendar forecast days, saved cities, and an offline forecast that stays honest about its age.
 
-**Live URL:** Pending deployment authentication. No public URL is claimed yet.  
-**Repository:** Pending publication.  
-**Submission status:** The app works without keys using Open-Meteo. GeoDB and OpenWeather adapters are implemented; their live account verification requires project keys. Closed-tab reminders are not implemented. See **Known Limitations** before submission.
+**Live URL:** [WeatherBoard](https://mahadabbasi19.github.io/Edspire-weather/) — GitHub Pages, HTTPS.
+**Repository:** [mahadabbasi19/Edspire-weather](https://github.com/mahadabbasi19/Edspire-weather).
+**Submission status:** GeoDB autocomplete, OpenWeather current/five-day weather, and Open-Meteo fallback are implemented and checked with real requests. Favourites, validation, responsive layouts and offline PWA behavior are tested. Closed-tab reminders are not implemented; active-app reminders are explicitly labelled. See **Known Limitations** before submission.
 
 ## Run locally
 
@@ -31,6 +31,8 @@ Use the production preview at `http://127.0.0.1:4173` to test PWA/offline featur
 | -------------------------- | ---------------------------------------------------------- | ------------------------------------------------- |
 | `VITE_GEODB_API_KEY`       | GeoDB Cities via RapidAPI, primary autocomplete            | Explicitly labelled Open-Meteo geocoding fallback |
 | `VITE_OPENWEATHER_API_KEY` | OpenWeather current weather and free 5-day/3-hour forecast | Open-Meteo weather, with visible source notice    |
+
+| `VITE_BASE_PATH` | Hosting directory; use `/Edspire-weather/` on Pages | Root directory `/` |
 
 All `VITE_*` values are **public build inputs**, visible in the JavaScript bundle and requests. They are not secret storage. Use only dedicated limited project credentials approved for browser distribution. Never put a privileged push/scheduler key, service account, or private credential here. Restrict provider quotas and permissions wherever the account supports them; do not assume either provider offers domain restrictions. If your key must remain private, a permitted server-side proxy is required; this submission intentionally contains no custom backend. `.env.local` is ignored by Git.
 
@@ -76,7 +78,7 @@ Each configured primary weather request is validated; any non-cancellation failu
 
 Workbox precaches versioned local JS, CSS, HTML and icons; it does not indiscriminately cache API requests. A separate validated `localStorage` entry stores only the last successful city snapshot, including its forecast and retrieval timestamp. Snapshots older than seven days are rejected. Corrupted data is ignored, favourites are deduplicated and capped at five, and storage write failures show a reduced-persistence banner. Storage failure prevents guaranteed offline weather persistence but does not break online weather. Browser-managed caches can be evicted.
 
-The next visit restores the last successful city. Offline views show a banner and “Saved forecast”, never “Live”. A first-use offline state has no invented data. Reconnection refreshes automatically. External Google font requests are optional: the system font stack keeps the offline shell readable.
+The next visit restores the last successful city. Offline views show a banner and “Saved forecast”, never “Live”. A first-use offline state has no invented data. Reconnection refreshes automatically. The licensed DM Sans variable font is bundled locally and precached; a system stack remains available. There is no external font dependency. Browser network hints are not authoritative: failed network requests can show “Connection unavailable” even when `navigator.onLine` is true. This is deliberately distinguished from a confirmed offline event. [MDN explains this browser limitation](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/onLine).
 
 ### Notifications: actual delivery contract
 
@@ -104,26 +106,36 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Browser interaction tests use fixtures **only in tests**, so they are deterministic. `scripts/live-check.mjs` separately checks live keyless APIs against a running production preview. Its saved evidence is [docs/live-check.json](docs/live-check.json): HTTP 200 weather for Karachi/London, HTTP 200 London geocoding, five forecast cards and no JavaScript page errors. Screenshots from automated responsive tests use fixtures and must not be presented as live weather; `live-desktop.png` comes from real requests.
+Browser interaction tests intercept both configured and keyless providers **only in tests**, so they are deterministic and never depend on live API quotas. **30 unit/component tests and 16 production-browser tests pass.** Scripts in `scripts/` separately check real requests. Evidence in [docs/deployment-check.json](docs/deployment-check.json) records the public HTTPS deployment, real GeoDB/OpenWeather requests, manifest, worker control, mobile overflow and offline reload. Request credentials are redacted in evidence. Initial live-check evidence captured an earlier 401 key and verified fallback; the updated key was then checked successfully in `docs/scoped-local-check.json` and on the public site.
 
-See [docs/AUDIT.md](docs/AUDIT.md) for exact results, requirements and remaining verification. No Lighthouse score, Safari/iOS install result, physical-device notification delivery or public-domain API test is claimed without execution.
+The measured local Lighthouse run scored **95 Performance, 100 Accessibility, 100 Best Practices, 100 SEO** (mobile simulation; one run, not a universal guarantee). The complete category summary, including the tool's additional agentic-browsing score, is in [docs/lighthouse-summary.json](docs/lighthouse-summary.json). Axe found no violations at 375 px in both themes and day/night card styles. Physical-device install/OS notification delivery are not claimed.
+
+Automated responsive screenshots use test fixtures; they must not be represented as live data. [Public desktop screenshot](docs/screenshots/deployed-desktop.png) and [public mobile screenshot](docs/screenshots/deployed-mobile.png) use real provider requests. See [docs/AUDIT.md](docs/AUDIT.md) for the requirement checklist and [docs/DELIVERY.md](docs/DELIVERY.md) for the final report and email draft.
 
 ## Deployment
 
-Vercel: import the public repository, choose Vite, build `npm run build`, output `dist`, install `npm ci`. Add optional public project keys in the project environment, then deploy. `vercel.json` supplies a no-cache worker/manifest policy. No server functions or rewrite backend are used. The app is a single page with no client routes.
+The verified public deployment uses **GitHub Pages**, an allowed static-hosting alternative in the PDF. `gh-pages` contains built artifacts plus `.nojekyll`; `main` contains source. HTTPS is enforced. The Pages build uses:
 
-After deployment, verify HTTPS, manifest/icon responses, worker control, refresh, real search/weather on that domain, notification permission behavior and offline reload. Paste the verified live URL above. GitHub publication requires authenticated account access; Vercel publication requires an authenticated account/project. Never submit invented URLs.
+```sh
+VITE_BASE_PATH=/Edspire-weather/ npm run build
+```
+
+Publish `dist` to the existing `gh-pages` branch using forward commits. Keep the matching manifest scope/start URL, worker navigation fallback, notification URL, font and icon paths; the configuration derives them from the base. Do not force-push or put `.env.local` in Git. Test locally with `VITE_BASE_PATH=/Edspire-weather/ npm run preview -- --port 4174` at `http://127.0.0.1:4174/Edspire-weather/`.
+
+For Vercel: import this repository's `main` branch, choose Vite, build `npm run build`, output `dist`, install `npm ci`. Set `VITE_BASE_PATH=/`, add the owner-approved public client keys, and deploy. `vercel.json` sets worker/manifest revalidation headers. `.vercelignore` excludes documents, prompt history and tests from deployment inputs. No backend, server functions or custom routing service are used.
+
+Vercel account login was unavailable during delivery. An anonymous preview returned HTTP 403 on public verification and was not used as the live URL. GitHub Pages provided an owned, stable alternative. The earlier agent-created `weatherboard-edspire` repository was left intact when the user later supplied the intended `Edspire-weather` destination; the submission links here use the user's repository.
 
 ## Known Limitations
 
 1. **Closed-tab daily push is not implemented.** The app supplies worker test notifications and explicitly labelled active-app reminders. A trusted scheduler/push service and private credentials are needed for closed-tab delivery. Exact delivery also remains subject to browser/OS policy.
-2. **GeoDB and OpenWeather account verification is pending.** Their adapters are implemented and tested with fixtures, but no real project keys were supplied. Keyless Open-Meteo search/weather work and were checked live. This is a configuration blocker, not an assertion that browser usage is impossible.
-3. **A 300 ms network-completion SLA cannot be guaranteed.** Requests begin after a 300 ms input pause; internet/provider latency and free-tier limits determine arrival. Visible loading and rate-limit recovery replace a false timing guarantee.
-4. **Platform testing is bounded.** Production Chromium offline reload is tested; actual installation and OS notification display on iOS, Safari, Android and desktop hardware require those environments. On iOS, Web Push requires an installed Home Screen web app on supported versions. Secure context, permission and OS settings still apply.
-5. **Offline data is bounded and evictable.** One successful snapshot, at most seven days old; no offline autocomplete or uncached-city weather. Disabled/quota-limited storage reduces persistence. Optional web font loading falls back to system fonts offline.
-6. **Free-tier terms apply.** Open-Meteo's free hosted API is for non-commercial use and has usage limits; a commercial deployment needs suitable licensing. GeoDB free-tier rate limits may be encountered despite debounce. [Open-Meteo terms](https://open-meteo.com/en/terms), [OpenWeather free forecast](https://openweathermap.org/forecast5).
-7. **Process disclosure:** Actual tool was Codex, while the PDF names Cursor/Antigravity/OpenCode. `PROMPTS.md` records the actual visible history without claiming another IDE. Acceptance of this tool choice is the reviewer's decision.
-8. **Publication remains unverified until URLs are filled above.** A working local build alone does not satisfy the PDF's submission requirement. The supplied PDF is marked confidential and retained locally, excluded from Git/public assets.
+2. **A 300 ms network-completion SLA cannot be guaranteed.** Requests begin after a 300 ms input pause; internet/provider latency and free-tier limits determine arrival. Loading and rate-limit messages replace a false timing guarantee.
+3. **Platform testing is bounded.** Production Chromium offline reload and manifest installability checks pass; physical installation and OS notification display on iOS/Safari/Android/desktop hardware require those environments. On supported iOS versions, Web Push requires an installed Home Screen web app. The current host denied native OS notification display; unit tests simulate the successful worker-call contract and browser tests cover failures.
+4. **Offline data is bounded and evictable.** One successful snapshot, at most seven days old; no offline autocomplete or uncached-city weather. Disabled/quota-limited storage reduces persistence. Browser network hints can remain online without internet; a connection-failure banner and saved-data label cover that case honestly.
+5. **Free-tier terms apply.** Open-Meteo's free hosted API is for non-commercial use and has usage limits; commercial deployment requires suitable licensing. GeoDB free-tier rate limits may be encountered despite debounce. [Open-Meteo terms](https://open-meteo.com/en/terms), [OpenWeather free forecast](https://openweathermap.org/forecast5).
+6. **Process disclosure:** Actual tool was Codex, while the PDF names Cursor/Antigravity/OpenCode. `PROMPTS.md` records the actual visible history without claiming another IDE. Acceptance of this tool choice is the reviewer's decision. The confidential challenge PDF was read and retained locally, excluded from public Git assets.
+
+No missing API key or deployment blocker is claimed after the user's configured keys and chosen repository were verified. Four low-severity build-tool dependency advisories remain; runtime dependencies have zero reported advisories. Details are in the audit.
 
 ## Interview preparation
 

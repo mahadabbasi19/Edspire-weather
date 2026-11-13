@@ -68,6 +68,7 @@ export function isSnapshot(v: unknown): v is WeatherSnapshot {
       (d) =>
         !!d &&
         typeof d === "object" &&
+        typeof d.sampled === "boolean" &&
         /^\d{4}-\d{2}-\d{2}$/.test(d.date) &&
         [d.high, d.low, d.code].every(Number.isFinite) &&
         (d.description === undefined || typeof d.description === "string"),

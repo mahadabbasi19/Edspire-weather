@@ -1,0 +1,72 @@
+{
+  "timestamp": "2026-11-13T17:20:14.707Z",
+  "url": "https://mahadabbasi19.github.io/Edspire-weather/",
+  "httpStatus": 200,
+  "manifestStatus": 200,
+  "manifest": {
+    "name": "WeatherBoard",
+    "short_name": "WeatherBoard",
+    "description": "A little clarity for your everyday.",
+    "start_url": "/Edspire-weather/",
+    "display": "standalone",
+    "background_color": "#f5f6f8",
+    "theme_color": "#183d39",
+    "lang": "en",
+    "scope": "/Edspire-weather/",
+    "icons": [
+      {
+        "src": "/Edspire-weather/icons/icon-192.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      },
+      {
+        "src": "/Edspire-weather/icons/icon-512.png",
+        "sizes": "512x512",
+        "type": "image/png"
+      },
+      {
+        "src": "/Edspire-weather/icons/maskable-512.png",
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "maskable"
+      }
+    ]
+  },
+  "installability": {
+    "installabilityErrors": []
+  },
+  "workerControlled": true,
+  "responses": [
+    {
+      "url": "https://api.openweathermap.org/data/2.5/forecast?lat=24.8607&lon=67.0011&units=metric&appid=REDACTED",
+      "status": 200
+    },
+    {
+      "url": "https://api.openweathermap.org/data/2.5/weather?lat=24.8607&lon=67.0011&units=metric&appid=REDACTED",
+      "status": 200
+    },
+    {
+      "url": "https://wft-geo-db.p.rapidapi.com/v1/geo/cities?namePrefix=London&limit=5&sort=-population&types=CITY",
+      "status": 200
+    },
+    {
+      "url": "https://api.openweathermap.org/data/2.5/weather?lat=51.507222222&lon=-0.1275&units=metric&appid=REDACTED",
+      "status": 200
+    },
+    {
+      "url": "https://api.openweathermap.org/data/2.5/forecast?lat=51.507222222&lon=-0.1275&units=metric&appid=REDACTED",
+      "status": 200
+    }
+  ],
+  "noOverflowAt375": true,
+  "resolvedBlurValid": true,
+  "outsideBlurErrorVisible": true,
+  "scriptAssets": [
+    "/Edspire-weather/assets/index-BENU1Qkc.js"
+  ],
+  "offlineReload": true,
+  "browserOnlineHint": true,
+  "offlineBanner": "Connection unavailable. Showing the last saved weather for London.\nTry again",
+  "offlineForecastCards": 5,
+  "errors": []
+}

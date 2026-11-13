@@ -65,6 +65,20 @@ await page.screenshot({
   path: "docs/screenshots/deployed-mobile.png",
   fullPage: true,
 });
+await page.getByRole("heading", { name: "Your day. At a glance." }).click();
+const resolvedBlurValid =
+  (await page.getByRole("combobox").getAttribute("aria-invalid")) === "false";
+await page.getByRole("combobox").fill("Unresolved city");
+await page.getByRole("heading", { name: "Your day. At a glance." }).click();
+await page
+  .getByText("Choose a city from the suggestions.")
+  .waitFor({ state: "visible" });
+const outsideBlurErrorVisible = true;
+const scriptAssets = await page
+  .locator("script[src]")
+  .evaluateAll((scripts) =>
+    scripts.map((script) => script.getAttribute("src")),
+  );
 await context.setOffline(true);
 await page.reload();
 const offlineBanner = page.getByText(
@@ -101,6 +115,9 @@ await writeFile(
       ),
       responses,
       noOverflowAt375: noOverflow,
+      resolvedBlurValid,
+      outsideBlurErrorVisible,
+      scriptAssets,
       offlineReload: offline,
       browserOnlineHint: await page.evaluate(() => navigator.onLine),
       offlineBanner: await offlineBanner.innerText(),

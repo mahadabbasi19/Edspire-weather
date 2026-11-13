@@ -1223,3 +1223,16 @@ dialog p {
 .current-bottom > span {
   opacity: 0.85;
 }
+
+.search-validation {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 4px);
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  z-index: 12;
+}
+.search.has-error .suggestions {
+  top: calc(100% + 30px);
+}

@@ -108,7 +108,12 @@ export function FavouritesPanel({
         onClose={() => {
           setRemove(null);
           if (restoreFocus.current?.isConnected) restoreFocus.current.focus();
-          else document.querySelector<HTMLButtonElement>(".add-city")?.focus();
+          else
+            document
+              .querySelector<HTMLButtonElement>(
+                ".favourite-city, .add-city:not(:disabled)",
+              )
+              ?.focus();
         }}
       >
         <h2 id="remove-title">Remove {remove?.name}?</h2>
