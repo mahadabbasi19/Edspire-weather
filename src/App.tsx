@@ -132,7 +132,11 @@ export default function App() {
         Skip to weather
       </a>
       <header className="app-header">
-        <a className="brand" href="/" aria-label="WeatherBoard home">
+        <a
+          className="brand"
+          href={import.meta.env.BASE_URL}
+          aria-label="WeatherBoard home"
+        >
           <span className="brand-icon">
             <CloudSun size={25} />
           </span>

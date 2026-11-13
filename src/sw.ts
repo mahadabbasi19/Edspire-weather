@@ -11,7 +11,13 @@ declare const self: ServiceWorkerGlobalScope & {
 // Sirf app shell cache hota hai; weather snapshot alag storage mein rehta hai.
 precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
-registerRoute(new NavigationRoute(createHandlerBoundToURL("/index.html")));
+registerRoute(
+  new NavigationRoute(
+    createHandlerBoundToURL(
+      new URL("index.html", self.registration.scope).pathname,
+    ),
+  ),
+);
 self.addEventListener("install", () => {
   void self.skipWaiting();
 });
@@ -26,11 +32,11 @@ self.addEventListener("notificationclick", (event) => {
         type: "window",
         includeUncontrolled: true,
       });
-      const client = clients.find(
-        (c) => new URL(c.url).origin === self.location.origin,
+      const client = clients.find((c) =>
+        c.url.startsWith(self.registration.scope),
       );
       if (client) await client.focus();
-      else await self.clients.openWindow("/");
+      else await self.clients.openWindow(self.registration.scope);
     })(),
   );
 });

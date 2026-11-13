@@ -41,9 +41,9 @@ export function Reminders({ city }: { city: string }) {
           : "Good morning from WeatherBoard",
         {
           body: `Check the latest weather for ${city}.`,
-          icon: "/icons/icon-192.png",
+          icon: `${import.meta.env.BASE_URL}icons/icon-192.png`,
           tag: test ? "wb-test" : "wb-morning",
-          data: { url: "/" },
+          data: { url: import.meta.env.BASE_URL },
         },
       );
     },
