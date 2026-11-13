@@ -30,6 +30,8 @@ export const isCity = (v: unknown): v is City => {
     typeof c.id === "string" &&
     typeof c.name === "string" &&
     typeof c.country === "string" &&
+    (c.region === undefined || typeof c.region === "string") &&
+    (c.timezone === undefined || typeof c.timezone === "string") &&
     Number.isFinite(c.latitude) &&
     Math.abs(c.latitude) <= 90 &&
     Number.isFinite(c.longitude) &&
@@ -57,6 +59,9 @@ export function isSnapshot(v: unknown): v is WeatherSnapshot {
       Number.isFinite(s.current[k as keyof typeof s.current]),
     ) &&
     typeof s.current.isDay === "boolean" &&
+    (s.current.description === undefined ||
+      typeof s.current.description === "string") &&
+    (s.notice === undefined || typeof s.notice === "string") &&
     Array.isArray(s.forecast) &&
     s.forecast.length === 5 &&
     s.forecast.every(
@@ -64,7 +69,8 @@ export function isSnapshot(v: unknown): v is WeatherSnapshot {
         !!d &&
         typeof d === "object" &&
         /^\d{4}-\d{2}-\d{2}$/.test(d.date) &&
-        [d.high, d.low, d.code].every(Number.isFinite),
+        [d.high, d.low, d.code].every(Number.isFinite) &&
+        (d.description === undefined || typeof d.description === "string"),
     )
   );
 }

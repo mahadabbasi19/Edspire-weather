@@ -13,6 +13,7 @@ export interface ForecastDay {
   low: number;
   code: number;
   sampled: boolean;
+  description?: string;
 }
 export interface WeatherSnapshot {
   city: City;
@@ -27,6 +28,7 @@ export interface WeatherSnapshot {
     wind: number;
     code: number;
     isDay: boolean;
+    description?: string;
   };
   forecast: ForecastDay[];
   notice?: string;

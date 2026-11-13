@@ -73,3 +73,36 @@ it("converts from normalized Celsius once", () => {
   expect(temperature(100, "F")).toBe(212);
   expect(temperature(-10, "C")).toBe(-10);
 });
+
+it("rejects corrupted optional snapshot text instead of rendering objects", () => {
+  const snapshot = {
+    city: city(1),
+    provider: "OpenWeather",
+    updatedAt: Date.now(),
+    timezone: "UTC",
+    offset: 0,
+    current: {
+      temperature: 20,
+      feelsLike: 20,
+      humidity: 50,
+      wind: 10,
+      code: 0,
+      isDay: true,
+      description: { invalid: true },
+    },
+    forecast: Array.from({ length: 5 }, (_, i) => ({
+      date: `2026-11-${13 + i}`,
+      high: 25,
+      low: 20,
+      code: 0,
+      sampled: true,
+    })),
+  };
+  expect(isSnapshot(snapshot)).toBe(false);
+  expect(
+    isSnapshot({
+      ...snapshot,
+      current: { ...snapshot.current, description: "Clear sky" },
+    }),
+  ).toBe(true);
+});

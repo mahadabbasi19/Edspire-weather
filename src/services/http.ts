@@ -2,6 +2,7 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public status = 0,
+    public kind: "provider" | "network" | "timeout" = "provider",
   ) {
     super(message);
   }
@@ -40,6 +41,8 @@ export async function json(
         : navigator.onLine
           ? "Could not reach the provider. Check your connection and retry."
           : "Your device is offline. Connect to search or refresh.",
+      0,
+      timeout.aborted ? "timeout" : "network",
     );
   }
 }

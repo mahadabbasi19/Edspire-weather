@@ -6,8 +6,12 @@ const errors = [];
 const responses = [];
 page.on("pageerror", (e) => errors.push(e.message));
 page.on("response", (r) => {
-  if (r.url().includes("open-meteo.com"))
-    responses.push({ url: r.url(), status: r.status() });
+  if (/open-meteo.com|openweathermap.org|p.rapidapi.com/.test(r.url())) {
+    const url = new URL(r.url());
+    if (url.searchParams.has("appid"))
+      url.searchParams.set("appid", "REDACTED");
+    responses.push({ url: url.toString(), status: r.status() });
+  }
 });
 await page.goto("http://127.0.0.1:4173");
 await page

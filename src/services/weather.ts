@@ -23,6 +23,10 @@ export function owmCode(id: number): number {
   if (id >= 300) return 51;
   return 95;
 }
+function providerDescription(value: unknown): string | undefined {
+  if (typeof value !== "string" || !value.trim()) return undefined;
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
 // UTC samples ko shehar ke offset se local calendar din mein jama kar rahe hain.
 export function aggregateForecast(
   list: unknown[],
@@ -30,7 +34,7 @@ export function aggregateForecast(
 ): ForecastDay[] {
   const days = new Map<
     string,
-    { temps: number[]; code: number; distance: number }
+    { temps: number[]; code: number; distance: number; description?: string }
   >();
   for (const value of list) {
     const item = object(value);
@@ -38,11 +42,13 @@ export function aggregateForecast(
     const key = date.toISOString().slice(0, 10);
     const distance = Math.abs(date.getUTCHours() - 12);
     const main = object(item.main);
-    const code = owmCode(num(object(array(item.weather)[0]).id));
+    const weather = object(array(item.weather)[0]);
+    const code = owmCode(num(weather.id));
     const day = days.get(key) ?? { temps: [], code, distance: Infinity };
     day.temps.push(num(main.temp_min), num(main.temp_max));
     if (distance < day.distance) {
       day.code = code;
+      day.description = providerDescription(weather.description);
       day.distance = distance;
     }
     days.set(key, day);
@@ -53,6 +59,7 @@ export function aggregateForecast(
     low: Math.min(...d.temps),
     code: d.code,
     sampled: true,
+    description: d.description,
   }));
 }
 export function normalizeMeteo(raw: unknown, city: City): WeatherSnapshot {
@@ -141,6 +148,7 @@ async function openWeather(
       humidity: num(m.humidity),
       wind: num(object(c.wind).speed) * 3.6,
       code: owmCode(num(object(array(c.weather)[0]).id)),
+      description: providerDescription(object(array(c.weather)[0]).description),
       isDay: num(c.dt) >= num(sys.sunrise) && num(c.dt) < num(sys.sunset),
     },
     forecast: days,

@@ -49,7 +49,7 @@ it("groups three-hour samples by city date across UTC midnight", () => {
   const entry = (dt: string, t: number) => ({
     dt: Date.parse(dt) / 1000,
     main: { temp_min: t - 1, temp_max: t + 1 },
-    weather: [{ id: 800 }],
+    weather: [{ id: 800, description: "clear sky" }],
   });
   const result = aggregateForecast(
     [
@@ -108,4 +108,49 @@ it("falls back after invalid primary payloads", async () => {
   expect((await loadWeather(city, new AbortController().signal)).provider).toBe(
     "Open-Meteo",
   );
+});
+
+it("normalizes a successful OpenWeather current and five-day response", async () => {
+  vi.stubEnv("VITE_OPENWEATHER_API_KEY", "fixture-key");
+  const start = Date.parse("2026-11-13T00:00:00Z") / 1000;
+  const current = {
+    dt: start + 3600 * 12,
+    timezone: 18000,
+    main: { temp: 24, feels_like: 25, humidity: 60 },
+    wind: { speed: 5 },
+    weather: [{ id: 721, description: "haze" }],
+    sys: { sunrise: start, sunset: start + 3600 * 18 },
+  };
+  const forecast = {
+    list: Array.from({ length: 40 }, (_, i) => ({
+      dt: start + i * 10800,
+      main: { temp_min: 20 + (i % 3), temp_max: 25 + (i % 4) },
+      weather: [{ id: 801 }],
+    })),
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi
+      .fn()
+      .mockImplementation((url: string) =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify(url.includes("/weather?") ? current : forecast),
+          ),
+        ),
+      ),
+  );
+  const result = await loadWeather(city, new AbortController().signal);
+  expect(result.provider).toBe("OpenWeather");
+  expect(result.current.description).toBe("Haze");
+  expect(result.current).toMatchObject({
+    temperature: 24,
+    humidity: 60,
+    wind: 18,
+    code: 45,
+    isDay: true,
+  });
+  expect(result.forecast).toHaveLength(5);
+  expect(result.forecast[0].date).toBe("2026-11-13");
+  expect(result.forecast.every((d) => d.sampled)).toBe(true);
 });

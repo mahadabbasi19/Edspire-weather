@@ -1,7 +1,10 @@
 import { chromium } from "@playwright/test";
 import { writeFile } from "node:fs/promises";
 const base = process.argv[2];
-if (!base?.startsWith("https://"))
+if (
+  !base ||
+  (!base.startsWith("https://") && !base.startsWith("http://127.0.0.1:"))
+)
   throw new Error("An HTTPS deployment URL is required.");
 const browser = await chromium.launch();
 const context = await browser.newContext({
@@ -12,14 +15,22 @@ const errors = [],
   responses = [];
 page.on("pageerror", (e) => errors.push(e.message));
 page.on("response", (r) => {
-  if (r.url().includes("open-meteo.com"))
-    responses.push({ url: r.url(), status: r.status() });
+  if (/open-meteo.com|openweathermap.org|p.rapidapi.com/.test(r.url())) {
+    const url = new URL(r.url());
+    if (url.searchParams.has("appid"))
+      url.searchParams.set("appid", "REDACTED");
+    responses.push({ url: url.toString(), status: r.status() });
+  }
 });
-const response = await page.goto(base);
+const response = await page.goto(base.replace(/\/?$/, "/"));
 await page.locator(".forecast-day").first().waitFor({ timeout: 30000 });
 await page.getByRole("combobox").fill("London");
 await page.getByRole("option").first().waitFor({ timeout: 20000 });
-await page.getByRole("option").first().click();
+await page
+  .getByRole("option")
+  .filter({ has: page.locator("strong", { hasText: /^London$/ }) })
+  .first()
+  .click();
 await page.waitForFunction(
   () =>
     document.querySelector(".location")?.textContent?.includes("London") &&
@@ -32,7 +43,7 @@ await page.evaluate(async () => {
 });
 await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
 const manifestResponse = await context.request.get(
-  base + "/manifest.webmanifest",
+  base.replace(/\/$/, "") + "/manifest.webmanifest",
 );
 const manifest = await manifestResponse.json();
 const cdp = await context.newCDPSession(page);
@@ -56,12 +67,27 @@ await page.screenshot({
 });
 await context.setOffline(true);
 await page.reload();
-const offline = await page
-  .getByText("You're offline. Showing the last saved weather for London.")
-  .isVisible();
+const offlineBanner = page.getByText(
+  /(?:You're offline|Connection unavailable)\. Showing the last saved weather for London\./,
+);
+await offlineBanner
+  .waitFor({ state: "visible", timeout: 10000 })
+  .catch(async (error) => {
+    console.log(
+      JSON.stringify({
+        body: (await page.locator("body").innerText()).slice(0, 2600),
+        state: await page.evaluate(() => ({
+          online: navigator.onLine,
+          city: JSON.parse(localStorage.getItem("wb-snapshot") ?? "null")?.city,
+        })),
+      }),
+    );
+    throw error;
+  });
+const offline = await offlineBanner.isVisible();
 const forecastCards = await page.locator(".forecast-day").count();
 await writeFile(
-  "docs/deployment-check.json",
+  process.argv[3] || "docs/deployment-check.json",
   JSON.stringify(
     {
       timestamp: new Date().toISOString(),
@@ -76,6 +102,8 @@ await writeFile(
       responses,
       noOverflowAt375: noOverflow,
       offlineReload: offline,
+      browserOnlineHint: await page.evaluate(() => navigator.onLine),
+      offlineBanner: await offlineBanner.innerText(),
       offlineForecastCards: forecastCards,
       errors,
     },

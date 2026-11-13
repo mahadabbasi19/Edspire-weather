@@ -31,3 +31,16 @@ it("reports invalid JSON as an unusable provider response", async () => {
     json("https://example.test", new AbortController().signal),
   ).rejects.toThrow();
 });
+
+it("classifies a timeout separately from network failure", async () => {
+  const controller = new AbortController();
+  controller.abort(new DOMException("Timeout", "TimeoutError"));
+  const timer = vi
+    .spyOn(AbortSignal, "timeout")
+    .mockReturnValue(controller.signal);
+  vi.stubGlobal("fetch", vi.fn().mockRejectedValue(controller.signal.reason));
+  await expect(
+    json("https://example.test", new AbortController().signal),
+  ).rejects.toThrow("The request timed out. Please try again.");
+  timer.mockRestore();
+});

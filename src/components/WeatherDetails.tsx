@@ -101,7 +101,7 @@ export function WeatherDetails({
                   </small>
                   <WeatherIcon code={day.code} size={35} />
                   <span className="forecast-condition">
-                    {condition(day.code)}
+                    {day.description ?? condition(day.code)}
                   </span>
                   <div>
                     <b>{temp(day.high)}</b>

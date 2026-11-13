@@ -24,6 +24,25 @@ const weather = {
   },
 };
 test.beforeEach(async ({ page }) => {
+  await page.route("https://api.openweathermap.org/**", (route) =>
+    route.fulfill({ status: 429, json: {} }),
+  );
+  await page.route("https://wft-geo-db.p.rapidapi.com/**", (route) =>
+    route.fulfill({
+      json: {
+        data: [
+          {
+            city: "Paris",
+            country: "France",
+            region: "Île-de-France",
+            latitude: 48.85,
+            longitude: 2.35,
+          },
+        ],
+      },
+    }),
+  );
+
   await page.route("https://api.open-meteo.com/**", (route) =>
     route.fulfill({ json: weather }),
   );
@@ -133,11 +152,19 @@ test("stale search results cannot replace the newest query", async ({
   page,
 }) => {
   await page.route("https://geocoding-api.open-meteo.com/**", async (route) => {
-    const old = route.request().url().includes("name=Lon");
+    const old = /(?:name|namePrefix)=Lon/.test(route.request().url());
     if (old) await new Promise((r) => setTimeout(r, 800));
     await route
       .fulfill({
         json: {
+          data: [
+            {
+              city: old ? "London" : "Paris",
+              country: old ? "UK" : "France",
+              latitude: old ? 51 : 48,
+              longitude: old ? 0 : 2,
+            },
+          ],
           results: [
             {
               name: old ? "London" : "Paris",
@@ -255,6 +282,31 @@ test("notification delivery failure is surfaced without breaking weather", async
   await page.getByRole("button", { name: "Send a test notification" }).click();
   await expect(
     page.getByText("Browser notification delivery is blocked."),
+  ).toBeVisible();
+  await expect(page.locator(".forecast-day")).toHaveCount(5);
+});
+
+test("connection failure is visible even when the browser reports online", async ({
+  page,
+  context,
+}) => {
+  await page.addInitScript(() =>
+    Object.defineProperty(navigator, "onLine", { get: () => true }),
+  );
+  await page.goto("/");
+  await expect(page.locator(".forecast-day")).toHaveCount(5);
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+  });
+  await page.waitForFunction(() => !!navigator.serviceWorker.controller);
+  await page.unroute("https://api.open-meteo.com/**");
+  await page.unroute("https://api.openweathermap.org/**");
+  await context.setOffline(true);
+  await page.reload();
+  await expect(
+    page.getByText(
+      "Connection unavailable. Showing the last saved weather for Karachi.",
+    ),
   ).toBeVisible();
   await expect(page.locator(".forecast-day")).toHaveCount(5);
 });

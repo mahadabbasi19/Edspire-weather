@@ -1448,3 +1448,29 @@ The supplied PDF was extracted and read in full, then used to check the seven co
 - Production Chromium tests exercised responsive layouts, keyboard search, favourites, storage failure and actual service-worker offline reload. Separate browser checks requested live Open-Meteo data.
 - All six requested reference URLs were visited; gated/private screens are identified in `docs/DESIGN.md`.
 - Source was refactored into focused favourites and weather-details components after the first test pass. No invented user prompt is attributed to that autonomous review.
+
+## 5. Credentials and chosen repository
+
+The user answered the pending setup questions with:
+
+```text
+cofigured:
+/Users/mahadahmedabbasi/Desktop/Edspire/.env.local
+```
+
+```text
+i have made github repo but didnot setup vercel:
+[https://github.com/mahadabbasi19/Edspire-weather.git](https://github.com/mahadabbasi19/Edspire-weather.git)
+```
+
+The chosen repository was empty and public. Source was pushed there without rewriting history. An earlier agent-created `weatherboard-edspire` repository was left intact when the user's chosen destination arrived.
+
+## 6. Updated weather credential
+
+IDE context showed `.env.local` as the active file. The user's exact follow-up was:
+
+```text
+i have updated openweather api key in .env.local so use that one
+```
+
+Credential values are intentionally excluded from this history. The app was rebuilt to use the updated local value.

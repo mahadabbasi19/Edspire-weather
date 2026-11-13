@@ -10,6 +10,7 @@ import {
   CloudSun,
 } from "lucide-react";
 import type { City, Unit } from "./types";
+import { ApiError } from "./services/http";
 import { loadWeather, condition } from "./services/weather";
 import {
   read,
@@ -40,6 +41,7 @@ export default function App() {
     [online, setOnline] = useState(navigator.onLine),
     [loading, setLoading] = useState(false),
     [error, setError] = useState(""),
+    [connectionLost, setConnectionLost] = useState(false),
     [cached, setCached] = useState(!!stored()),
     [retry, setRetry] = useState(0),
     [storageFailed, setStorageFailed] = useState(false),
@@ -72,6 +74,7 @@ export default function App() {
   useEffect(() => {
     const controller = new AbortController();
     setError("");
+    setConnectionLost(false);
     if (!online) {
       setLoading(false);
       setStatus("");
@@ -89,6 +92,7 @@ export default function App() {
       })
       .catch((e) => {
         if (controller.signal.aborted) return;
+        setConnectionLost(e instanceof ApiError && e.kind === "network");
         setError(
           e instanceof Error
             ? e.message
@@ -190,6 +194,15 @@ export default function App() {
               : "You’re offline. Connect once to save a forecast for this city."}
           </div>
         )}
+        {online && connectionLost && (
+          <div className="banner" role="status">
+            <WifiOff size={18} />
+            {data
+              ? `Connection unavailable. Showing the last saved weather for ${city.name}.`
+              : "Connection unavailable. Reconnect and retry to load weather."}
+            <button onClick={() => setRetry((x) => x + 1)}>Try again</button>
+          </div>
+        )}
         {swFailed && (
           <div className="banner" role="status">
             Offline installation could not start. You can still view weather
@@ -237,7 +250,10 @@ export default function App() {
                         {temp(data.current.temperature)}
                         <span>{unit}</span>
                       </div>
-                      <h2>{condition(data.current.code)}</h2>
+                      <h2>
+                        {data.current.description ??
+                          condition(data.current.code)}
+                      </h2>
                       <p>
                         Feels like {temp(data.current.feelsLike)} ·{" "}
                         {data.current.isDay ? "Daytime" : "Nighttime"}
@@ -297,7 +313,7 @@ export default function App() {
                 </div>
               )}
             </section>
-            {error && (
+            {error && !connectionLost && (
               <div className="banner error-banner" role="alert">
                 {error} {data ? "Showing your saved forecast." : ""}
                 <button onClick={() => setRetry((x) => x + 1)}>
