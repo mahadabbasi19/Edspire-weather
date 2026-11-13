@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-13T17:20:14.707Z",
+  "timestamp": "2026-11-13T17:23:54.151Z",
   "url": "https://mahadabbasi19.github.io/Edspire-weather/",
   "httpStatus": 200,
   "manifestStatus": 200,
@@ -38,11 +38,11 @@
   "workerControlled": true,
   "responses": [
     {
-      "url": "https://api.openweathermap.org/data/2.5/forecast?lat=24.8607&lon=67.0011&units=metric&appid=REDACTED",
+      "url": "https://api.openweathermap.org/data/2.5/weather?lat=24.8607&lon=67.0011&units=metric&appid=REDACTED",
       "status": 200
     },
     {
-      "url": "https://api.openweathermap.org/data/2.5/weather?lat=24.8607&lon=67.0011&units=metric&appid=REDACTED",
+      "url": "https://api.openweathermap.org/data/2.5/forecast?lat=24.8607&lon=67.0011&units=metric&appid=REDACTED",
       "status": 200
     },
     {
@@ -62,11 +62,13 @@
   "resolvedBlurValid": true,
   "outsideBlurErrorVisible": true,
   "scriptAssets": [
-    "/Edspire-weather/assets/index-BENU1Qkc.js"
+    "/Edspire-weather/assets/index-CybgBmgU.js"
   ],
   "offlineReload": true,
   "browserOnlineHint": true,
   "offlineBanner": "Connection unavailable. Showing the last saved weather for London.\nTry again",
   "offlineForecastCards": 5,
-  "errors": []
+  "errors": [],
+  "sourceCommit": "833071f",
+  "deploymentCommit": "8fd1f6e"
 }
