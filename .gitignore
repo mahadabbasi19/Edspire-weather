@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.env*
+!.env.example
+playwright-report/
+test-results/
+*.tsbuildinfo
+.DS_Store
+
+# Interview brief is marked confidential; keep it local.
+docs/Edspire-Frontend-Technical-Challenge.pdf
+docs/challenge.txt
+docs/references/*.png

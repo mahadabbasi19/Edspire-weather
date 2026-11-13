@@ -1,0 +1,175 @@
+import type { City, ForecastDay, WeatherSnapshot } from "../types";
+import { array, json, num, object, str, ApiError } from "./http";
+export function condition(code: number): string {
+  return code === 0
+    ? "Clear sky"
+    : code <= 2
+      ? "Partly cloudy"
+      : code === 3
+        ? "Overcast"
+        : code <= 48
+          ? "Foggy"
+          : code <= 57
+            ? "Drizzle"
+            : code <= 67
+              ? "Rain"
+              : code <= 77
+                ? "Snow"
+                : code <= 82
+                  ? "Rain showers"
+                  : code <= 86
+                    ? "Snow showers"
+                    : "Thunderstorms";
+}
+export function owmCode(id: number): number {
+  return id >= 800
+    ? id === 800
+      ? 0
+      : id === 801
+        ? 1
+        : id === 802
+          ? 2
+          : 3
+    : id >= 700
+      ? 45
+      : id >= 600
+        ? 73
+        : id >= 500
+          ? 63
+          : id >= 300
+            ? 51
+            : 95;
+}
+// UTC samples ko shehar ke offset se local calendar din mein jama kar rahe hain.
+export function aggregateForecast(
+  list: unknown[],
+  offset: number,
+): ForecastDay[] {
+  const days = new Map<
+    string,
+    { temps: number[]; code: number; distance: number }
+  >();
+  for (const value of list) {
+    const item = object(value);
+    const date = new Date((num(item.dt) + offset) * 1000);
+    const key = date.toISOString().slice(0, 10);
+    const distance = Math.abs(date.getUTCHours() - 12);
+    const main = object(item.main);
+    const code = owmCode(num(object(array(item.weather)[0]).id));
+    const day = days.get(key) ?? { temps: [], code, distance: Infinity };
+    day.temps.push(num(main.temp_min), num(main.temp_max));
+    if (distance < day.distance) {
+      day.code = code;
+      day.distance = distance;
+    }
+    days.set(key, day);
+  }
+  return [...days].slice(0, 5).map(([date, d]) => ({
+    date,
+    high: Math.max(...d.temps),
+    low: Math.min(...d.temps),
+    code: d.code,
+    sampled: true,
+  }));
+}
+export function normalizeMeteo(raw: unknown, city: City): WeatherSnapshot {
+  const d = object(raw),
+    c = object(d.current),
+    daily = object(d.daily);
+  const dates = array(daily.time),
+    high = array(daily.temperature_2m_max),
+    low = array(daily.temperature_2m_min),
+    codes = array(daily.weather_code);
+  const timezone = str(d.timezone);
+  try {
+    new Intl.DateTimeFormat("en", { timeZone: timezone }).format();
+  } catch {
+    throw new ApiError("Provider returned an invalid timezone.");
+  }
+  const forecast = dates.slice(0, 5).map((date, i) => ({
+    date: str(date),
+    high: num(high[i]),
+    low: num(low[i]),
+    code: num(codes[i]),
+    sampled: false,
+  }));
+  if (forecast.length !== 5)
+    throw new ApiError("Provider returned fewer than five forecast days.");
+  return {
+    city,
+    provider: "Open-Meteo",
+    updatedAt: Date.now(),
+    timezone,
+    offset: num(d.utc_offset_seconds),
+    current: {
+      temperature: num(c.temperature_2m),
+      feelsLike: num(c.apparent_temperature),
+      humidity: num(c.relative_humidity_2m),
+      wind: num(c.wind_speed_10m),
+      code: num(c.weather_code),
+      isDay: num(c.is_day) === 1,
+    },
+    forecast,
+  };
+}
+async function meteo(city: City, signal: AbortSignal) {
+  return normalizeMeteo(
+    await json(
+      `https://api.open-meteo.com/v1/forecast?latitude=${city.latitude}&longitude=${city.longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=5`,
+      signal,
+    ),
+    city,
+  );
+}
+async function openWeather(
+  city: City,
+  signal: AbortSignal,
+): Promise<WeatherSnapshot> {
+  const base = `lat=${city.latitude}&lon=${city.longitude}&units=metric&appid=${encodeURIComponent(import.meta.env.VITE_OPENWEATHER_API_KEY)}`;
+  const [current, forecast] = await Promise.all([
+    json(`https://api.openweathermap.org/data/2.5/weather?${base}`, signal),
+    json(`https://api.openweathermap.org/data/2.5/forecast?${base}`, signal),
+  ]);
+  const c = object(current),
+    f = object(forecast),
+    m = object(c.main),
+    sys = object(c.sys);
+  const offset = num(c.timezone),
+    days = aggregateForecast(array(f.list), offset);
+  if (days.length !== 5)
+    throw new ApiError("OpenWeather returned fewer than five forecast days.");
+  return {
+    city,
+    provider: "OpenWeather",
+    timezone: city.timezone ?? "UTC",
+    offset,
+    updatedAt: Date.now(),
+    current: {
+      temperature: num(m.temp),
+      feelsLike: num(m.feels_like),
+      humidity: num(m.humidity),
+      wind: num(object(c.wind).speed) * 3.6,
+      code: owmCode(num(object(array(c.weather)[0]).id)),
+      isDay: num(c.dt) >= num(sys.sunrise) && num(c.dt) < num(sys.sunset),
+    },
+    forecast: days,
+  };
+}
+export async function loadWeather(
+  city: City,
+  signal: AbortSignal,
+  onFallback?: () => void,
+): Promise<WeatherSnapshot> {
+  let notice: string;
+  if (import.meta.env.VITE_OPENWEATHER_API_KEY?.trim()) {
+    try {
+      return await openWeather(city, signal);
+    } catch (error) {
+      if (signal.aborted) throw error;
+      notice = `OpenWeather unavailable: ${error instanceof Error ? error.message : "Invalid response."} Using Open-Meteo.`;
+      onFallback?.();
+    }
+  } else notice = "OpenWeather key is not configured. Using Open-Meteo.";
+  const data = await meteo(city, signal);
+  return { ...data, notice };
+}
