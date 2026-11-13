@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-11-13T16:41:05.341Z",
+  "responses": [
+    {
+      "url": "https://api.open-meteo.com/v1/forecast?latitude=24.8607&longitude=67.0011&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=5",
+      "status": 200
+    },
+    {
+      "url": "https://geocoding-api.open-meteo.com/v1/search?name=London&count=5&language=en&format=json",
+      "status": 200
+    },
+    {
+      "url": "https://api.open-meteo.com/v1/forecast?latitude=51.50853&longitude=-0.12574&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=5",
+      "status": 200
+    }
+  ],
+  "suggestions": [
+    "LondonEngland, United Kingdom",
+    "LondonOntario, Canada",
+    "LondonOhio, United States",
+    "LondonKentucky, United States",
+    "LondonArkansas, United States"
+  ],
+  "forecastCards": 5,
+  "location": "London, United Kingdom",
+  "errors": [],
+  "body": "Skip to weather\nWeather\nBoard\nYOUR EVERYDAY OUTLOOK\n°C\n°F\nA LITTLE CLARITY, EVERY DAY\nYour day. At a glance.\n\nThe forecast for wherever life takes you.\n\nSearch for a city\n↵\nLondon, United Kingdom\nCurrent conditions\nFriday 13 November · 16:41 local time\n7°C\nClear sky\n\nFeels like 4° · Nighttime\n\nUpdated 13 Nov, 21:41 · Open-Meteo\nSave city\n\nOpenWeather key is not configured. Using Open-Meteo.\n\nFeels like\n4°\nHow it feels outside\nHumidity\n52%\nRelative humidity\nWind speed\n5 km/h\nAt 10 metres above ground\nTHE DAYS AHEAD\n5-day forecast\nToday\n13 Nov\nPartly cloudy\n8°\n2°\nSat\n14 Nov\nOvercast\n10°\n1°\nSun\n15 Nov\nRain\n12°\n5°\nMon\n16 Nov\nDrizzle\n8°\n5°\nTue\n17 Nov\nDrizzle\n12°\n5°\n\nDaily high / low · City local calendar days\n\nYOUR PLACES\nFavourite cities 0/5\n\nA shortcut to the places you care about.\n\nKeep your places close.\n\nSave a city to find its forecast\nright here, whenever you need it.\n\nAdd current city\nA BETTER START\nYour morning, with clarity.\n\nA gentle nudge to check the weather before you head out.\n\nMorning reminder\nDevice local time\nAllow active-app reminder\n\nBest effort while the app is open. Closed-tab delivery is unavailable. Permission: denied.\n\nA forecast, even offline.\n\nYour last viewed forecast stays with you after a successful visit.\n\nWeatherBoard\nMade for the everyday.\nWeather by Open-Meteo\n & OpenWeather"
+}

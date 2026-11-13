@@ -159,3 +159,102 @@ test("stale search results cannot replace the newest query", async ({
   await page.waitForTimeout(900);
   await expect(page.getByRole("option")).toContainText("Paris");
 });
+
+test("keyboard search dismissal, dialog focus, unit and theme persistence", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator(".forecast-day")).toHaveCount(5);
+  const search = page.getByRole("combobox");
+  await search.fill("Paris");
+  await page.getByRole("option").waitFor();
+  await search.press("ArrowDown");
+  await search.press("Enter");
+  await expect(page.locator(".location")).toContainText("Paris");
+  await page.getByRole("button", { name: "Save city", exact: true }).click();
+  const remove = page.getByRole("button", {
+    name: "Remove Paris",
+    exact: true,
+  });
+  await remove.click();
+  await expect(
+    page.getByRole("button", { name: "Cancel", exact: true }),
+  ).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(remove).toBeFocused();
+  await page.getByRole("button", { name: "°F", exact: true }).click();
+  await page.getByRole("button", { name: /Switch to dark theme/ }).click();
+  await page.reload();
+  await expect(
+    page.getByRole("button", { name: "°F", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+});
+test("storage failures do not break weather or favourites", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Storage.prototype.setItem = () => {
+      throw new DOMException("Quota exceeded", "QuotaExceededError");
+    };
+  });
+  await page.goto("/");
+  await expect(page.locator(".forecast-day")).toHaveCount(5);
+  await expect(page.getByText(/Browser storage is unavailable/)).toBeVisible();
+  await page.getByRole("button", { name: "Save city", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Remove Karachi", exact: true }),
+  ).toBeVisible();
+});
+test("first-use offline state and unsupported notifications remain usable", async ({
+  page,
+  context,
+}) => {
+  await page.addInitScript(() => {
+    delete (window as unknown as Record<string, unknown>).Notification;
+  });
+  await page.goto("/");
+  await expect(page.locator(".forecast-day")).toHaveCount(5);
+  await page.getByRole("button", { name: "Allow active-app reminder" }).click();
+  await expect(
+    page.getByText(/Notifications need a supported browser/),
+  ).toBeVisible();
+  await page.evaluate(() => localStorage.removeItem("wb-snapshot"));
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+  });
+  await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page.getByText(/Connect once to save a forecast/)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "No forecast available" }),
+  ).toBeVisible();
+});
+
+test("notification delivery failure is surfaced without breaking weather", async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(["notifications"]);
+  await page.addInitScript(() => {
+    Object.defineProperty(Notification, "permission", { get: () => "granted" });
+    ServiceWorkerRegistration.prototype.showNotification = async () => {
+      throw new Error("Browser notification delivery is blocked.");
+    };
+  });
+  await page.goto("/");
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+  });
+  await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
+  await page.getByRole("button", { name: "Allow active-app reminder" }).click();
+  await expect(
+    page.getByRole("button", { name: "Turn off active-app reminder" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Send a test notification" }).click();
+  await expect(
+    page.getByText("Browser notification delivery is blocked."),
+  ).toBeVisible();
+  await expect(page.locator(".forecast-day")).toHaveCount(5);
+});

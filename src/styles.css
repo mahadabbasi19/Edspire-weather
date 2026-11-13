@@ -13,7 +13,7 @@
   font-weight: 400;
   --surface: #fff;
   --border: #e5e9e9;
-  --muted: #687975;
+  --muted: #596d66;
   --green: #235d4f;
   --subtle: #f4f7f6;
   --text: #243634;
@@ -1191,4 +1191,29 @@ dialog p {
     animation: none !important;
     scroll-behavior: auto !important;
   }
+}
+@media (max-width: 600px) {
+  .units button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .brand {
+    min-height: 44px;
+  }
+}
+
+.night .weather-status {
+  background: #e5eceb;
+  color: #24463d;
+  border-color: #e5eceb;
+}
+.night .current-bottom button {
+  background: #e5eceb;
+  color: #24463d;
+  border-color: #e5eceb;
+}
+.local-date,
+.current-body p,
+.current-bottom > span {
+  opacity: 0.85;
 }

@@ -30,6 +30,10 @@ export async function json(
   } catch (error) {
     if (signal.aborted) throw error;
     if (error instanceof ApiError) throw error;
+    if (error instanceof SyntaxError)
+      throw new ApiError(
+        "The provider returned invalid JSON. Please try again later.",
+      );
     throw new ApiError(
       timeout.aborted
         ? "The request timed out. Please try again."

@@ -1,0 +1,22 @@
+[
+  {
+    "mode": "light",
+    "night": false,
+    "violations": []
+  },
+  {
+    "mode": "light",
+    "night": true,
+    "violations": []
+  },
+  {
+    "mode": "dark",
+    "night": false,
+    "violations": []
+  },
+  {
+    "mode": "dark",
+    "night": true,
+    "violations": []
+  }
+]

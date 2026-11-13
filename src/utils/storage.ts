@@ -39,6 +39,11 @@ export const isCity = (v: unknown): v is City => {
 export function isSnapshot(v: unknown): v is WeatherSnapshot {
   if (!v || typeof v !== "object") return false;
   const s = v as WeatherSnapshot;
+  try {
+    new Intl.DateTimeFormat("en", { timeZone: s.timezone }).format();
+  } catch {
+    return false;
+  }
   return (
     isCity(s.city) &&
     (s.provider === "OpenWeather" || s.provider === "Open-Meteo") &&
@@ -56,6 +61,8 @@ export function isSnapshot(v: unknown): v is WeatherSnapshot {
     s.forecast.length === 5 &&
     s.forecast.every(
       (d) =>
+        !!d &&
+        typeof d === "object" &&
         /^\d{4}-\d{2}-\d{2}$/.test(d.date) &&
         [d.high, d.low, d.code].every(Number.isFinite),
     )

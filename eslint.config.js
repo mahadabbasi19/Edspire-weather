@@ -14,7 +14,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ["**/*.{js,ts,tsx}"],
+    files: ["**/*.{js,mjs,ts,tsx}"],
     languageOptions: {
       globals: {
         window: "readonly",

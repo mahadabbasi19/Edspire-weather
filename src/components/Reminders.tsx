@@ -114,9 +114,10 @@ export function Reminders({ city }: { city: string }) {
           try {
             const result = await Notification.requestPermission();
             setPermission(result);
-            if (result !== "granted") {
+            if (result !== "granted" || Notification.permission !== "granted") {
+              setPermission(Notification.permission);
               setError(
-                "Notifications are not allowed. Update your browser site permissions to try again.",
+                "Notifications are not allowed. Check browser site permissions and operating system notification settings.",
               );
               return;
             }

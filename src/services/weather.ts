@@ -1,44 +1,27 @@
 import type { City, ForecastDay, WeatherSnapshot } from "../types";
 import { array, json, num, object, str, ApiError } from "./http";
 export function condition(code: number): string {
-  return code === 0
-    ? "Clear sky"
-    : code <= 2
-      ? "Partly cloudy"
-      : code === 3
-        ? "Overcast"
-        : code <= 48
-          ? "Foggy"
-          : code <= 57
-            ? "Drizzle"
-            : code <= 67
-              ? "Rain"
-              : code <= 77
-                ? "Snow"
-                : code <= 82
-                  ? "Rain showers"
-                  : code <= 86
-                    ? "Snow showers"
-                    : "Thunderstorms";
+  if (code === 0) return "Clear sky";
+  if (code <= 2) return "Partly cloudy";
+  if (code === 3) return "Overcast";
+  if (code <= 48) return "Foggy";
+  if (code <= 57) return "Drizzle";
+  if (code <= 67) return "Rain";
+  if (code <= 77) return "Snow";
+  if (code <= 82) return "Rain showers";
+  if (code <= 86) return "Snow showers";
+  return "Thunderstorms";
 }
 export function owmCode(id: number): number {
-  return id >= 800
-    ? id === 800
-      ? 0
-      : id === 801
-        ? 1
-        : id === 802
-          ? 2
-          : 3
-    : id >= 700
-      ? 45
-      : id >= 600
-        ? 73
-        : id >= 500
-          ? 63
-          : id >= 300
-            ? 51
-            : 95;
+  if (id === 800) return 0;
+  if (id === 801) return 1;
+  if (id === 802) return 2;
+  if (id >= 803) return 3;
+  if (id >= 700) return 45;
+  if (id >= 600) return 73;
+  if (id >= 500) return 63;
+  if (id >= 300) return 51;
+  return 95;
 }
 // UTC samples ko shehar ke offset se local calendar din mein jama kar rahe hain.
 export function aggregateForecast(
@@ -93,7 +76,15 @@ export function normalizeMeteo(raw: unknown, city: City): WeatherSnapshot {
     code: num(codes[i]),
     sampled: false,
   }));
-  if (forecast.length !== 5)
+  if (
+    forecast.length !== 5 ||
+    new Set(forecast.map((d) => d.date)).size !== 5 ||
+    forecast.some(
+      (d) =>
+        !/^\d{4}-\d{2}-\d{2}$/.test(d.date) ||
+        !Number.isFinite(Date.parse(d.date)),
+    )
+  )
     throw new ApiError("Provider returned fewer than five forecast days.");
   return {
     city,
